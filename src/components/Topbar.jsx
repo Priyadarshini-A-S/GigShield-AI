@@ -2,31 +2,37 @@ import { motion } from 'framer-motion';
 import { FiBell, FiSun, FiMoon } from 'react-icons/fi';
 
 const pageLabels = {
-  home: 'Dashboard', plan: 'Buy Policy', twin: 'Digital Twin',
-  map: 'Risk Heatmap', alerts: 'Disruption Alerts',
-  payouts: 'Payouts', fraud: 'Fraud Detection', admin: 'Admin Analytics'
+  home:    'My Dashboard',
+  plan:    'My Coverage',
+  twin:    'Income Simulator',
+  map:     'Risk Heatmap',
+  alerts:  'Disruption Alerts',
+  payouts: 'My Payouts',
+  fraud:   'Fraud Detection',
+  admin:   'Admin Analytics',
 };
 
 export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
-  const { rainfall, aqi, traffic } = env;
-  const isAlert = rainfall > 30 || aqi > 200 || traffic > 75;
-  const isDark = theme === 'dark';
+  const { rainfall, aqi, traffic, floodAlert, curfew } = env;
+  const isAlert = rainfall > 30 || aqi > 200 || traffic > 75 || floodAlert || curfew;
+  const isDark  = theme === 'dark';
 
   return (
     <header className="topbar">
-      {/* Breadcrumb */}
       <div style={{ flex: 1 }}>
-        <p style={{ fontSize: 11, color: 'var(--text-5)', fontWeight: 500 }}>GigShield AI</p>
+        <p style={{ fontSize: 11, color: 'var(--text-5)', fontWeight: 500 }}>GigShield · Protect Your Worker</p>
         <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-1)', lineHeight: 1.2 }}>
           {pageLabels[page] || 'Dashboard'}
         </p>
       </div>
 
       {/* Live env pills */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Pill label={`Rain ${rainfall.toFixed(0)}mm`} color={rainfall > 30 ? '#f87171' : 'var(--text-4)'} />
-        <Pill label={`AQI ${Math.round(aqi)}`}        color={aqi > 200     ? '#fbbf24' : 'var(--text-4)'} />
-        <Pill label={`Traffic ${Math.round(traffic)}%`} color={traffic > 75 ? '#fb923c' : 'var(--text-4)'} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Pill label={`🌧 ${rainfall.toFixed(0)}mm`}   color={rainfall > 30 ? '#f87171' : 'var(--text-4)'} />
+        <Pill label={`😷 AQI ${Math.round(aqi)}`}     color={aqi > 200     ? '#fbbf24' : 'var(--text-4)'} />
+        <Pill label={`🚗 ${Math.round(traffic)}%`}    color={traffic > 75  ? '#fb923c' : 'var(--text-4)'} />
+        {floodAlert && <Pill label="🌊 Flood Alert" color="#ef4444" pulse />}
+        {curfew     && <Pill label="🚧 Curfew"      color="#ef4444" pulse />}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 8 }}>
@@ -35,7 +41,7 @@ export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
           <div style={{
             width: 7, height: 7, borderRadius: '50%',
             background: isAlert ? '#ef4444' : '#22c55e',
-            boxShadow: isAlert ? '0 0 8px #ef4444' : '0 0 8px #22c55e'
+            boxShadow: isAlert ? '0 0 8px #ef4444' : '0 0 8px #22c55e',
           }} />
           <span style={{ fontSize: 11, color: isAlert ? '#f87171' : '#34d399', fontWeight: 500 }}>
             {isAlert ? 'Alert Active' : 'All Clear'}
@@ -47,7 +53,7 @@ export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
           width: 34, height: 34, borderRadius: 9,
           background: 'var(--bg-2)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', position: 'relative'
+          cursor: 'pointer', position: 'relative',
         }}>
           <FiBell style={{ color: 'var(--text-4)', fontSize: 15 }} />
           {isAlert && (
@@ -55,7 +61,7 @@ export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
           )}
         </button>
 
-        {/* ── Theme toggle ── */}
+        {/* Theme toggle */}
         <motion.button
           className="theme-btn"
           onClick={onToggleTheme}
@@ -70,8 +76,7 @@ export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
           >
             {isDark
               ? <FiSun  style={{ color: '#fbbf24', fontSize: 16 }} />
-              : <FiMoon style={{ color: '#6366f1', fontSize: 16 }} />
-            }
+              : <FiMoon style={{ color: '#6366f1', fontSize: 16 }} />}
           </motion.div>
         </motion.button>
 
@@ -80,25 +85,28 @@ export default function Topbar({ page, env, worker, theme, onToggleTheme }) {
           width: 34, height: 34, borderRadius: 9,
           background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', flexShrink: 0
+          fontSize: 13, fontWeight: 700, color: 'white', cursor: 'pointer', flexShrink: 0,
         }}>
-          {worker?.name?.[0] || 'U'}
+          {worker?.phone?.slice(-1) || 'U'}
         </div>
       </div>
     </header>
   );
 }
 
-function Pill({ label, color }) {
+function Pill({ label, color, pulse }) {
   return (
-    <span style={{
-      fontSize: 11, fontWeight: 500, color,
-      background: `${color}15`,
-      border: `1px solid ${color}30`,
-      padding: '3px 10px', borderRadius: 20,
-      transition: 'color 0.2s'
-    }}>
+    <motion.span
+      animate={pulse ? { opacity: [1, 0.5, 1] } : {}}
+      transition={pulse ? { duration: 1.2, repeat: Infinity } : {}}
+      style={{
+        fontSize: 11, fontWeight: 500, color,
+        background: `${color}15`,
+        border: `1px solid ${color}30`,
+        padding: '3px 10px', borderRadius: 20,
+        transition: 'color 0.2s',
+      }}>
       {label}
-    </span>
+    </motion.span>
   );
 }
